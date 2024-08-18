@@ -1,0 +1,6 @@
+@solara_backend_HostAddress = http://localhost:5208
+
+GET {{solara_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
