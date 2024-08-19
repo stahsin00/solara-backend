@@ -8,6 +8,7 @@ namespace Solara.Models
         public string FaceArt { get; set; } = null!;
         public string Description { get; set; } = null!;
         public string Element { get; set; } = null!;
+        public int Price { get; set; }
 
         public int BaseAttackStat { get; set; }
         public int BaseSpeedStat { get; set; }
