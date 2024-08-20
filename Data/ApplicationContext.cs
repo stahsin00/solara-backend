@@ -3,11 +3,13 @@ using Solara.Models;
 
 namespace Solara.Data
 {
-    public class CharacterContext : DbContext
+    public class ApplicationContext : DbContext
     {
-        public CharacterContext(DbContextOptions<CharacterContext> options) : base(options) { }
+        public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) { }
 
+        public DbSet<User> Users { get; set; } = null!;
         public DbSet<Character> Characters { get; set; } = null!;
+        public DbSet<CharacterInstance> CharacterInstances { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -4,15 +4,50 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace solara_backend.Migrations.User
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
+namespace solara_backend.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUserContext : Migration
+    public partial class MergeContexts : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Characters",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FullArt = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FaceArt = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Description = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Element = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Price = table.Column<int>(type: "int", nullable: false),
+                    BaseAttackStat = table.Column<int>(type: "int", nullable: false),
+                    BaseSpeedStat = table.Column<int>(type: "int", nullable: false),
+                    BaseCritRateStat = table.Column<float>(type: "float", nullable: false),
+                    BaseCritDamageStat = table.Column<float>(type: "float", nullable: false),
+                    BaseEnergyRechargeStat = table.Column<float>(type: "float", nullable: false),
+                    BasicAttack = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    SpecialAttack = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Characters", x => x.Id);
+                })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
@@ -47,21 +82,23 @@ namespace solara_backend.Migrations.User
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "CharacterInstance",
+                name: "CharacterInstances",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
-                    UserId = table.Column<int>(type: "int", nullable: true)
+                    CharacterId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CharacterInstance", x => x.Id);
+                    table.PrimaryKey("PK_CharacterInstances", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CharacterInstance_Users_UserId",
+                        name: "FK_CharacterInstances_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -84,9 +121,20 @@ namespace solara_backend.Migrations.User
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.InsertData(
+                table: "Characters",
+                columns: new[] { "Id", "BaseAttackStat", "BaseCritDamageStat", "BaseCritRateStat", "BaseEnergyRechargeStat", "BaseSpeedStat", "BasicAttack", "Description", "Element", "FaceArt", "FullArt", "Name", "Price", "SpecialAttack" },
+                values: new object[,]
+                {
+                    { 1, 100, 1.5f, 0.1f, 1f, 20, "Sword Slash", "A laid-back wanderer drifting through Solara.", "Blue", "art/margana-face.png", "art/margana.png", "Margana", 5000, "Blazing Strike" },
+                    { 2, 80, 1.4f, 0.12f, 1.2f, 15, "Water Blast", "A passionate artist known to get fired up.", "Magenta", "art/a-face.png", "art/a.png", "Artemisia", 5000, "Tsunami" },
+                    { 3, 80, 1.4f, 0.12f, 1.2f, 15, "Water Blast", "A hardworking maid just trying her best.", "Magenta", "art/b-face.png", "art/b.png", "Powder", 5000, "Tsunami" },
+                    { 4, 80, 1.4f, 0.12f, 1.2f, 15, "Water Blast", "A medical student currently enrolled at the University of Solara.", "Magenta", "art/e-face.png", "art/e.png", "Ann", 5000, "Tsunami" }
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_CharacterInstance_UserId",
-                table: "CharacterInstance",
+                name: "IX_CharacterInstances_UserId",
+                table: "CharacterInstances",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -99,7 +147,10 @@ namespace solara_backend.Migrations.User
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CharacterInstance");
+                name: "CharacterInstances");
+
+            migrationBuilder.DropTable(
+                name: "Characters");
 
             migrationBuilder.DropTable(
                 name: "Quest");

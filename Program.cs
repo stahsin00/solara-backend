@@ -25,9 +25,7 @@ var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 
 
 // Configure services
-builder.Services.AddDbContext<CharacterContext>(options =>
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 23))));
-builder.Services.AddDbContext<UserContext>(options =>
+builder.Services.AddDbContext<ApplicationContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 23))));
 
 builder.Services.AddControllers();

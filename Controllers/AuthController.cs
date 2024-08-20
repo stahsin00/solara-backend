@@ -12,9 +12,9 @@ namespace Solara.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly UserContext _context;
+        private readonly ApplicationContext _context;
 
-        public AuthController(UserContext context)
+        public AuthController(ApplicationContext context)
         {
             _context = context;
         }
