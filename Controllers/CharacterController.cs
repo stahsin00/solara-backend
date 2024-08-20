@@ -1,6 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 using Solara.Data;
+using Solara.Models;
 
 namespace Solara.Controllers
 {
@@ -8,11 +12,14 @@ namespace Solara.Controllers
     [Route("api/[controller]")]
     public class CharacterController : ControllerBase
     {
-        private readonly CharacterContext _context;
+        private readonly ApplicationContext _context;
 
-        public CharacterController(CharacterContext context)
+        private readonly ILogger<CharacterController> _logger;
+
+        public CharacterController(ApplicationContext context, ILogger<CharacterController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET /api/character
@@ -29,6 +36,57 @@ namespace Solara.Controllers
         {
             var character = await _context.Characters.FindAsync(id);
             return character != null ? Ok(character) : NotFound();
+        }
+
+        // POST /api/character/addcharacter/{id}
+        [HttpPost("addcharacter/{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> AddCharacter(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Invalid email claim.");
+                }
+
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var character = await _context.Characters.FindAsync(id);
+                if (character == null)
+                {
+                    return NotFound(new { message = "Character not found." });
+                }
+
+                // TODO : check if user already owns character
+
+                if (user.Balance < character.Price)
+                {
+                    return StatusCode(403, new { message = "Not enough funds." });
+                }
+
+                var characterInstance = new CharacterInstance
+                {
+                    UserId = user.Id,
+                    CharacterId = id
+                };
+
+                user.Balance -= character.Price;
+                user.Characters.Add(characterInstance);
+
+                await _context.CharacterInstances.AddAsync(characterInstance);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Character added." });
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in CharacterController - AddCharacter:");
+                return StatusCode(500, new { message = "Unable to add character." });
+            }
         }
     }
 }
