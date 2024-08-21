@@ -8,8 +8,11 @@ namespace Solara.Data
         public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; } = null!;
+
         public DbSet<Character> Characters { get; set; } = null!;
         public DbSet<CharacterInstance> CharacterInstances { get; set; } = null!;
+        
+        public DbSet<EquipmentInstance> EquipmentInstances { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
