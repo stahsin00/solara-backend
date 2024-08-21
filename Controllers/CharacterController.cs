@@ -38,6 +38,40 @@ namespace Solara.Controllers
             return character != null ? Ok(character) : NotFound();
         }
 
+        // GET /api/character/user/{id}
+        [HttpGet("user/{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> GetUserCharacterById(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Invalid email claim.");
+                }
+
+                var user = await _context.Users.Include(u => u.Characters)
+                                            .ThenInclude(ci => ci.Character)  // TODO: consider not eager loading
+                                            .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var characterInstance = user.Characters.FirstOrDefault(ci => ci.Character.Id == id);
+                if (characterInstance == null)
+                {
+                    return NotFound(new { message = "Character not found." });
+                }
+
+                return Ok(characterInstance);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in CharacterController - GetUserCharacterById:");
+                return StatusCode(500, new { message = "Unable to get character." });
+            }
+        }
+
         // POST /api/character/addcharacter/{id}
         [HttpPost("addcharacter/{id:int}")]
         [Authorize]
@@ -72,8 +106,12 @@ namespace Solara.Controllers
 
                 var characterInstance = new CharacterInstance
                 {
-                    UserId = user.Id,
-                    CharacterId = id
+                    Character = character,
+                    AttackStat = character.BaseAttackStat,
+                    SpeedStat = character.BaseSpeedStat,
+                    CritRateStat = character.BaseCritRateStat,
+                    CritDamageStat = character.BaseCritDamageStat,
+                    EnergyRechargeStat = character.BaseEnergyRechargeStat
                 };
 
                 user.Balance -= character.Price;
