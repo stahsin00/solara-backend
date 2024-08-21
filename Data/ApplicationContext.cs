@@ -9,6 +9,8 @@ namespace Solara.Data
 
         public DbSet<User> Users { get; set; } = null!;
 
+        public DbSet<Quest> Quests { get; set; } = null!;
+
         public DbSet<Character> Characters { get; set; } = null!;
         public DbSet<CharacterInstance> CharacterInstances { get; set; } = null!;
         

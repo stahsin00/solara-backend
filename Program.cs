@@ -49,6 +49,8 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// TODO : look into Swagger/OpenAPI
+
 
 // Set up middleware
 // Configure the HTTP request pipeline.
