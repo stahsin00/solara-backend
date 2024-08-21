@@ -38,6 +38,35 @@ namespace Solara.Controllers
             return character != null ? Ok(character) : NotFound();
         }
 
+        // GET /api/character/user
+        [HttpGet("user")]
+        [Authorize]
+        public async Task<IActionResult> GetUserCharacters()
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Invalid email claim.");
+                }
+
+                // TODO: consider pagination
+                var user = await _context.Users.Include(u => u.Characters)
+                                            .ThenInclude(ci => ci.Character)
+                                            .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                return Ok(user.Characters);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in CharacterController - GetUserCharacters:");
+                return StatusCode(500, new { message = "Unable to get characters." });
+            }
+        }
+
         // GET /api/character/user/{id}
         [HttpGet("user/{id:int}")]
         [Authorize]
@@ -107,6 +136,7 @@ namespace Solara.Controllers
                 var characterInstance = new CharacterInstance
                 {
                     Character = character,
+                    UserId = user.Id,
                     AttackStat = character.BaseAttackStat,
                     SpeedStat = character.BaseSpeedStat,
                     CritRateStat = character.BaseCritRateStat,
