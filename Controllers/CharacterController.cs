@@ -156,5 +156,57 @@ namespace Solara.Controllers
                 return StatusCode(500, new { message = "Unable to add character." });
             }
         }
+
+        // PATCH /api/character/level/{id}
+        [HttpPatch("level/{id:int}")]
+        [Authorize]
+        public async Task<IActionResult> LevelCharacter(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("Invalid email claim.");
+                }
+
+                var user = await _context.Users.Include(u => u.Characters)
+                                            .ThenInclude(ci => ci.Character)  // TODO: consider not eager loading
+                                            .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                if (user.Exp < 1)
+                {
+                    return StatusCode(403, new { message = "Not enough material." });
+                }
+
+                var characterInstance = user.Characters.FirstOrDefault(ci => ci.Character.Id == id);
+                if (characterInstance == null)
+                {
+                    return NotFound(new { message = "Character not found." });
+                }
+
+                // TODO: fix calculations and hardcoded values
+                user.Exp -= 1;
+                characterInstance.Experience += 50;
+                if (characterInstance.Experience >= 100) {
+                    characterInstance.Level += characterInstance.Experience / 100;
+                    characterInstance.Experience %= 100;
+                }
+
+                _context.Users.Update(user);
+                _context.CharacterInstances.Update(characterInstance);
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Character leveled." });
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in CharacterController - LevelCharacter:");
+                return StatusCode(500, new { message = "Unable to level character." });
+            }
+        }
     }
 }
