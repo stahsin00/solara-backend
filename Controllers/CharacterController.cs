@@ -101,8 +101,8 @@ namespace Solara.Controllers
             }
         }
 
-        // POST /api/character/addcharacter/{id}
-        [HttpPost("addcharacter/{id:int}")]
+        // POST /api/character/add/{id}
+        [HttpPost("add/{id:int}")]
         [Authorize]
         public async Task<IActionResult> AddCharacter(int id)
         {
