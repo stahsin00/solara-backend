@@ -51,6 +51,38 @@ namespace Solara.Controllers
             }
         }
 
+        // GET /api/quest/{id}
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetQuest(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var user = await _context.Users.Include(u => u.Quests)
+                                            .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var quest = user.Quests.FirstOrDefault(q => q.Id == id);
+                if (quest == null)
+                {
+                    return NotFound(new { message = "Quest not found." });
+                }
+
+                return Ok(quest);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in QuestController - GetQuest:");
+                return StatusCode(500, new { message = "Unable to get quest." });
+            }
+        }
+
         // POST /api/quest
         [HttpPost]
         public async Task<IActionResult> CreateQuest([FromBody] QuestDto dto)
