@@ -147,7 +147,6 @@ namespace Solara.Controllers
                 user.Balance -= character.Price;
                 user.Characters.Add(characterInstance);
 
-                await _context.CharacterInstances.AddAsync(characterInstance);
                 await _context.SaveChangesAsync();
 
                 return Ok(characterInstance);

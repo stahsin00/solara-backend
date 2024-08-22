@@ -200,13 +200,47 @@ namespace Solara.Controllers
                     // TODO
                 }
 
-                user.Quests.Add(quest);
                 await _context.SaveChangesAsync();
 
                 return Ok(quest);
             } catch (Exception e) {
                 _logger.LogError(e, "Error in QuestController - EditQuest:");
-                return StatusCode(500, new { message = "Unable to create quest." });
+                return StatusCode(500, new { message = "Unable to edit quest." });
+            }
+        }
+
+        // DELETE /api/quest/{id}
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> DeleteQuest(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var user = await _context.Users.Include(u => u.Quests)
+                                            .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var quest = user.Quests.FirstOrDefault(q => q.Id == id);
+                if (quest == null)
+                {
+                    return NotFound(new { message = "Quest not found." });
+                }
+
+                _context.Quests.Remove(quest);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Quest deleted." });
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in QuestController - DeleteQuest:");
+                return StatusCode(500, new { message = "Unable to delete quest." });
             }
         }
 
