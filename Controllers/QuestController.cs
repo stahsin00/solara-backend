@@ -273,7 +273,28 @@ namespace Solara.Controllers
                     return BadRequest(new { message = "Quest is already completed." });
                 }
 
+                // TODO
+                var balance = 0;
+                var exp = 0;
+
+                switch (quest.Difficulty) {
+                    case Difficulty.Medium:
+                        balance = 500;
+                        exp = 5;
+                        break;
+                    case Difficulty.Hard:
+                        balance = 1000;
+                        exp = 10;
+                        break;
+                    default:
+                        balance = 100;
+                        exp = 1;
+                        break;
+                }
+
                 quest.Complete = true;
+                user.Balance += balance;
+                user.Exp += exp;
                 quest.UpdatedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
 
