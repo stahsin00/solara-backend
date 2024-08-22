@@ -152,6 +152,64 @@ namespace Solara.Controllers
             }
         }
 
+        // PATCH /api/quest/{id}
+        [HttpPatch("{id:int}")]
+        public async Task<IActionResult> EditQuest(int id, [FromBody] QuestDto dto)
+        {
+            try {
+                // TODO: validation
+                if (!Enum.TryParse<Difficulty>(dto.Difficulty, true, out var difficulty))
+                {
+                    return BadRequest(new { message = "Invalid difficulty. Difficulty must be one of the following: Easy, Medium, Hard, Unspecified." });
+                }
+
+                if (!Enum.TryParse<Repetition>(dto.Repetition, true, out var repetition) && !string.IsNullOrEmpty(dto.Repetition))
+                {
+                    return BadRequest(new { message = $"Invalid repetition type: {dto.Repetition}" });
+                }
+                
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var user = await _context.Users.Include(u => u.Quests)
+                                            .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var quest = user.Quests.FirstOrDefault(q => q.Id == id);
+                if (quest == null)
+                {
+                    return NotFound(new { message = "Quest not found." });
+                }
+
+                quest.Name = dto.Name;
+                quest.Description = dto.Description;
+                quest.Deadline = dto.Deadline;
+                quest.Difficulty = difficulty;
+                quest.Important = dto.Important;
+                quest.UpdatedAt = DateTime.UtcNow;
+
+                if (!string.IsNullOrEmpty(dto.Repetition))
+                {
+                    // TODO
+                }
+
+                user.Quests.Add(quest);
+                await _context.SaveChangesAsync();
+
+                return Ok(quest);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in QuestController - EditQuest:");
+                return StatusCode(500, new { message = "Unable to create quest." });
+            }
+        }
+
         // PATCH /api/quest/complete/{id}
         [HttpPatch("complete/{id:int}")]
         public async Task<IActionResult> CompleteQuest(int id)
