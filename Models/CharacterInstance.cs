@@ -23,7 +23,7 @@ namespace Solara.Models
         //public EquipmentInstance? Footwear { get; set; }
         //public EquipmentInstance? Weapon { get; set; }
 
-        public bool Team { get; set; } = false;
+        public int TeamPos { get; set; } = 0;
 
         public DateTime ObtainedAt { get; set; } = DateTime.UtcNow;
     }

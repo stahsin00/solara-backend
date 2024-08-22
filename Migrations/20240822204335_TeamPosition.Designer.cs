@@ -12,8 +12,8 @@ using Solara.Data;
 namespace solara_backend.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20240821001717_CharacterDetailsUpdate")]
-    partial class CharacterDetailsUpdate
+    [Migration("20240822204335_TeamPosition")]
+    partial class TeamPosition
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -189,8 +189,8 @@ namespace solara_backend.Migrations
                     b.Property<float>("SpeedStat")
                         .HasColumnType("float");
 
-                    b.Property<bool>("Team")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<int>("TeamPos")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -228,14 +228,49 @@ namespace solara_backend.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("UserId")
+                    b.Property<bool>("Complete")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("Deadline")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Important")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(13)
+                        .HasColumnType("varchar(13)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Quest");
+                    b.ToTable("Quests");
+
+                    b.HasDiscriminator<string>("Type").HasValue("Regular");
+
+                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Solara.Models.User", b =>
@@ -274,13 +309,46 @@ namespace solara_backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("Teamcharacter1Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teamcharacter2Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teamcharacter3Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teamcharacter4Id")
+                        .HasColumnType("int");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Teamcharacter1Id");
+
+                    b.HasIndex("Teamcharacter2Id");
+
+                    b.HasIndex("Teamcharacter3Id");
+
+                    b.HasIndex("Teamcharacter4Id");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Solara.Models.RecurrentQuest", b =>
+                {
+                    b.HasBaseType("Solara.Models.Quest");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Repetition")
+                        .HasColumnType("int");
+
+                    b.HasDiscriminator().HasValue("Recurrent");
                 });
 
             modelBuilder.Entity("Solara.Models.CharacterInstance", b =>
@@ -304,7 +372,40 @@ namespace solara_backend.Migrations
                 {
                     b.HasOne("Solara.Models.User", null)
                         .WithMany("Quests")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Solara.Models.User", b =>
+                {
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter1")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter1Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter2")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter2Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter3")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter3Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter4")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter4Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("TeamCharacter1");
+
+                    b.Navigation("TeamCharacter2");
+
+                    b.Navigation("TeamCharacter3");
+
+                    b.Navigation("TeamCharacter4");
                 });
 
             modelBuilder.Entity("Solara.Models.User", b =>

@@ -3,9 +3,11 @@
 ## API Endpoints
 - GET /api/auth/login
 - POST /api/auth/logout  
-<br>  
+<br>
+
 - GET /api/user  
 <br> 
+
 - GET /api/character
 - GET /api/character/:id
 - GET /api/character/user
@@ -13,6 +15,12 @@
 - POST /api/character/add/:id
 - PATCH /api/character/level/:id  
 <br> 
+
+- GET /api/character/team
+- PATCH /api/character/addtoteam/:id
+- PATCH /api/character/removefromteam 
+<br> 
+
 - GET /api/quest
 - GET /api/quest/:id
 - POST /api/quest
