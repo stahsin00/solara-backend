@@ -209,6 +209,48 @@ namespace Solara.Controllers
             }
         }
 
+        // GET /api/character/team
+        [HttpGet("team")]
+        [Authorize]
+        public async Task<IActionResult> GetTeam()
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                        return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var user = await _context.Users.Include(u => u.TeamCharacter1)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .Include(u => u.TeamCharacter2)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .Include(u => u.TeamCharacter3)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .Include(u => u.TeamCharacter4)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                var teamDto = new TeamDto
+                {
+                    TeamCharacter1 = user.TeamCharacter1,
+                    TeamCharacter2 = user.TeamCharacter2,
+                    TeamCharacter3 = user.TeamCharacter3,
+                    TeamCharacter4 = user.TeamCharacter4
+                };
+
+                return Ok(teamDto);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in CharacterController - GetTeam:");
+                return StatusCode(500, new { message = "Unable to get team." });
+            }
+        }
+
         // PATCH /api/character/addtoteam/{id}
         [HttpPatch("addtoteam/{id:int}")]
         [Authorize]
