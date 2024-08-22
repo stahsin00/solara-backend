@@ -16,6 +16,11 @@
 - PATCH /api/character/level/:id  
 <br> 
 
+- GET /api/character/team
+- PATCH /api/character/addtoteam/:id
+- PATCH /api/character/removefromteam 
+<br> 
+
 - GET /api/quest
 - GET /api/quest/:id
 - POST /api/quest

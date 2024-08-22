@@ -223,7 +223,7 @@ namespace Solara.Controllers
                 }
 
                 var user = await _context.Users.Include(u => u.TeamCharacter1)
-                                                    .ThenInclude(ci => ci!.Character)
+                                                    .ThenInclude(ci => ci!.Character)  // EF is supposed to handle null cases (?)
                                                 .Include(u => u.TeamCharacter2)
                                                     .ThenInclude(ci => ci!.Character)
                                                 .Include(u => u.TeamCharacter3)
@@ -316,6 +316,69 @@ namespace Solara.Controllers
             } catch (Exception e) {
                 _logger.LogError(e, "Error in CharacterController - AddToTeam:");
                 return StatusCode(500, new { message = "Unable to add character to team." });
+            }
+        }
+
+        // PATCH /api/character/removefromteam
+        [HttpPatch("removefromteam")]
+        [Authorize]
+        public async Task<IActionResult> RemoveFromTeam([FromBody] PositionDto dto)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                        return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var user = await _context.Users.Include(u => u.TeamCharacter1)
+                                                    .ThenInclude(ci => ci!.Character)  // EF is supposed to handle null cases (?)
+                                                .Include(u => u.TeamCharacter2)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .Include(u => u.TeamCharacter3)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .Include(u => u.TeamCharacter4)
+                                                    .ThenInclude(ci => ci!.Character)
+                                                .FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found." });
+                }
+
+                switch (dto.Position) {
+                    case 1:
+                        if (user.TeamCharacter1 != null) {
+                            user.TeamCharacter1.TeamPos = 0;
+                            user.TeamCharacter1 = null;
+                        }
+                        break;
+                    case 2:
+                        if (user.TeamCharacter2 != null) {
+                            user.TeamCharacter2.TeamPos = 0;
+                            user.TeamCharacter2 = null;
+                        }
+                        break;
+                    case 3:
+                        if (user.TeamCharacter3 != null) {
+                            user.TeamCharacter3.TeamPos = 0;
+                            user.TeamCharacter3 = null;
+                        }
+                        break;
+                    case 4:
+                        if (user.TeamCharacter4 != null) {
+                            user.TeamCharacter4.TeamPos = 0;
+                            user.TeamCharacter4 = null;
+                        }
+                        break;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Character removed from team." });
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in CharacterController - RemoveFromTeam:");
+                return StatusCode(500, new { message = "Unable to remove character from team." });
             }
         }
     }
