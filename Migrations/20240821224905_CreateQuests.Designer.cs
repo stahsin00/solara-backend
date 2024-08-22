@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Solara.Data;
 
@@ -11,9 +12,11 @@ using Solara.Data;
 namespace solara_backend.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20240821224905_CreateQuests")]
+    partial class CreateQuests
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -231,32 +234,18 @@ namespace solara_backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("Deadline")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<int>("Difficulty")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Important")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(13)
-                        .HasColumnType("varchar(13)");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -264,10 +253,6 @@ namespace solara_backend.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Quests");
-
-                    b.HasDiscriminator<string>("Type").HasValue("Regular");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Solara.Models.User", b =>
@@ -315,19 +300,6 @@ namespace solara_backend.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Solara.Models.RecurrentQuest", b =>
-                {
-                    b.HasBaseType("Solara.Models.Quest");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("Repetition")
-                        .HasColumnType("int");
-
-                    b.HasDiscriminator().HasValue("Recurrent");
-                });
-
             modelBuilder.Entity("Solara.Models.CharacterInstance", b =>
                 {
                     b.HasOne("Solara.Models.Character", "Character")
@@ -349,9 +321,7 @@ namespace solara_backend.Migrations
                 {
                     b.HasOne("Solara.Models.User", null)
                         .WithMany("Quests")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("Solara.Models.User", b =>

@@ -9,6 +9,8 @@ namespace Solara.Data
 
         public DbSet<User> Users { get; set; } = null!;
 
+        public DbSet<Quest> Quests { get; set; } = null!;
+
         public DbSet<Character> Characters { get; set; } = null!;
         public DbSet<CharacterInstance> CharacterInstances { get; set; } = null!;
         
@@ -16,6 +18,11 @@ namespace Solara.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Quest>()
+                .HasDiscriminator<string>("Type")
+                .HasValue<Quest>("Regular")
+                .HasValue<RecurrentQuest>("Recurrent");
+            
             modelBuilder.Entity<Character>().HasData(
                 new Character
                 {
