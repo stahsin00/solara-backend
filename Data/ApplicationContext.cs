@@ -18,6 +18,11 @@ namespace Solara.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Quest>()
+                .HasDiscriminator<string>("Type")
+                .HasValue<Quest>("Regular")
+                .HasValue<RecurrentQuest>("Recurrent");
+            
             modelBuilder.Entity<Character>().HasData(
                 new Character
                 {

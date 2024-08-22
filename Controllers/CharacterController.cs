@@ -150,7 +150,7 @@ namespace Solara.Controllers
                 await _context.CharacterInstances.AddAsync(characterInstance);
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Character added." });
+                return Ok(characterInstance);
             } catch (Exception e) {
                 _logger.LogError(e, "Error in CharacterController - AddCharacter:");
                 return StatusCode(500, new { message = "Unable to add character." });
@@ -202,7 +202,7 @@ namespace Solara.Controllers
 
                 await _context.SaveChangesAsync();
 
-                return Ok(new { message = "Character leveled." });
+                return Ok(characterInstance);
             } catch (Exception e) {
                 _logger.LogError(e, "Error in CharacterController - LevelCharacter:");
                 return StatusCode(500, new { message = "Unable to level character." });

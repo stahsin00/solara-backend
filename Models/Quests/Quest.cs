@@ -5,6 +5,12 @@ namespace Solara.Models
         public int Id { get; set; }
         public string Name { get; set; } = null!;
         public string Description { get; set; } = null!;
+        public int UserId { get; set; }
+
+        public DateTime? Deadline { get; set; }
+
+        public Difficulty Difficulty { get; set; }
+        public bool Important { get; set; } = false;
 
         public bool Complete { get; set; } = false;
 
