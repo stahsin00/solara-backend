@@ -27,6 +27,7 @@ namespace Solara.Controllers
         public async Task<IActionResult> GetUser()
         {
             try {
+                // TODO: fix duplicate code for all authorized endpoint
                 var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
 
                 if (string.IsNullOrEmpty(email))

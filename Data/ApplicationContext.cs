@@ -22,6 +22,30 @@ namespace Solara.Data
                 .HasDiscriminator<string>("Type")
                 .HasValue<Quest>("Regular")
                 .HasValue<RecurrentQuest>("Recurrent");
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.TeamCharacter1)
+                .WithMany()  // for one sided relationships even though it's not actually one-to-many
+                .HasForeignKey(u => u.Teamcharacter1Id)
+                .OnDelete(DeleteBehavior.SetNull);
+            
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.TeamCharacter2)
+                .WithMany()
+                .HasForeignKey(u => u.Teamcharacter2Id)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.TeamCharacter3)
+                .WithMany()
+                .HasForeignKey(u => u.Teamcharacter3Id)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.TeamCharacter4)
+                .WithMany()
+                .HasForeignKey(u => u.Teamcharacter4Id)
+                .OnDelete(DeleteBehavior.SetNull);
             
             modelBuilder.Entity<Character>().HasData(
                 new Character

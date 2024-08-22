@@ -13,10 +13,17 @@ namespace Solara.Models
         public int Balance { get; set; } = 5000; // TODO: centralize hardcoded values
         public int Exp { get; set; } = 10; // TODO
 
-        // public CharacterInstance? TeamCharacter1 { get; set; }
-        // public CharacterInstance? TeamCharacter2 { get; set; }
-        // public CharacterInstance? TeamCharacter3 { get; set; }
-        // public CharacterInstance? TeamCharacter4 { get; set; }
+        public int? Teamcharacter1Id { get; set; }
+        public CharacterInstance? TeamCharacter1 { get; set; }
+
+        public int? Teamcharacter2Id { get; set; }
+        public CharacterInstance? TeamCharacter2 { get; set; }
+        
+        public int? Teamcharacter3Id { get; set; }
+        public CharacterInstance? TeamCharacter3 { get; set; }
+        
+        public int? Teamcharacter4Id { get; set; }
+        public CharacterInstance? TeamCharacter4 { get; set; }
 
         public ICollection<Quest> Quests { get; set; } = new List<Quest>();
         public ICollection<CharacterInstance> Characters { get; set; } = new List<CharacterInstance>();

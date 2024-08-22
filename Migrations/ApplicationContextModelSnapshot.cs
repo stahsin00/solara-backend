@@ -186,8 +186,8 @@ namespace solara_backend.Migrations
                     b.Property<float>("SpeedStat")
                         .HasColumnType("float");
 
-                    b.Property<bool>("Team")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<int>("TeamPos")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -306,11 +306,31 @@ namespace solara_backend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("Teamcharacter1Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teamcharacter2Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teamcharacter3Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Teamcharacter4Id")
+                        .HasColumnType("int");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Teamcharacter1Id");
+
+                    b.HasIndex("Teamcharacter2Id");
+
+                    b.HasIndex("Teamcharacter3Id");
+
+                    b.HasIndex("Teamcharacter4Id");
 
                     b.ToTable("Users");
                 });
@@ -352,6 +372,37 @@ namespace solara_backend.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Solara.Models.User", b =>
+                {
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter1")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter1Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter2")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter2Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter3")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter3Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Solara.Models.CharacterInstance", "TeamCharacter4")
+                        .WithMany()
+                        .HasForeignKey("Teamcharacter4Id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("TeamCharacter1");
+
+                    b.Navigation("TeamCharacter2");
+
+                    b.Navigation("TeamCharacter3");
+
+                    b.Navigation("TeamCharacter4");
                 });
 
             modelBuilder.Entity("Solara.Models.User", b =>
