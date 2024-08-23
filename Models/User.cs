@@ -13,6 +13,7 @@ namespace Solara.Models
         public int Balance { get; set; } = 5000; // TODO: centralize hardcoded values
         public int Exp { get; set; } = 10; // TODO
 
+        // TODO: use an array
         public int? Teamcharacter1Id { get; set; }
         public CharacterInstance? TeamCharacter1 { get; set; }
 

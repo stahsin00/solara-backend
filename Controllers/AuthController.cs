@@ -20,8 +20,9 @@ namespace Solara.Controllers
         }
 
         [HttpGet("login")]
-        public IActionResult Login(string returnUrl = "/")
+        public IActionResult Login()
         {
+            string returnUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "/";
             var properties = new AuthenticationProperties { RedirectUri = Url.Action("GoogleResponse", new { returnUrl }) };
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
         }
@@ -59,7 +60,7 @@ namespace Solara.Controllers
 
             await HttpContext.SignInAsync(result.Principal);
 
-            return LocalRedirect(returnUrl);
+            return Redirect(returnUrl);
         }
 
         [HttpPost("logout")]
