@@ -23,6 +23,8 @@ var connectionString = $"server={dbHost};port=3306;database={dbName};user={dbUse
 var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
 var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 
+var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "/";
+
 
 // Configure services
 builder.Services.AddDbContext<ApplicationContext>(options =>
@@ -46,6 +48,17 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", builder =>
+    {
+        builder.WithOrigins(frontendUrl)
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
+    });
+});
+
 
 var app = builder.Build();
 
@@ -61,6 +74,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
