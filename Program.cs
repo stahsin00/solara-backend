@@ -1,4 +1,5 @@
 using DotNetEnv;
+using Microsoft.Extensions.FileProviders;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -73,6 +74,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// TODO: temp
+app.UseStaticFiles();
+
 app.UseRouting();
 app.UseCors("Frontend");
 app.UseAuthentication();
