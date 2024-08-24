@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 
 using Solara.Data;
+using Solara.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,6 +60,8 @@ builder.Services.AddCors(options =>
                .AllowCredentials();
     });
 });
+
+builder.Services.AddHostedService<GameTickService>();
 
 
 var app = builder.Build();

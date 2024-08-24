@@ -6,9 +6,7 @@ namespace Solara.Models
         public User User { get; set; } = null!;
         public Quest Quest { get; set; } = null!;
 
-        public int Hours { get; set; }
-        public int Minutes { get; set; }
-        public int Seconds { get; set; }
+        public TimeSpan RemainingTime { get; set; }
 
         // TODO: ignore for now, enemy types has not been implemented yet, just using basic health for now
         public float EnemyCurHealth { get; set; }

@@ -77,10 +77,10 @@ namespace Solara.Controllers
             }
         }
 
-        // PATCH /api/game/pause
-        [HttpPatch("pause")]
+        // PATCH /api/game
+        [HttpPatch]
         [Authorize]
-        public async Task<IActionResult> PauseGame()
+        public async Task<IActionResult> PausePlayGame()
         {
             try {
                 var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -100,36 +100,8 @@ namespace Solara.Controllers
 
                 return Ok(new { message = "TODO" });
             } catch (Exception e) {
-                _logger.LogError(e, "Error in GameController - PauseGame:");
-                return StatusCode(500, new { message = "Unable to pause game." });
-            }
-        }
-
-        // PATCH /api/game/play
-        [HttpPatch("play")]
-        [Authorize]
-        public async Task<IActionResult> PlayGame()
-        {
-            try {
-                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
-
-                if (string.IsNullOrEmpty(email))
-                {
-                    return BadRequest("Invalid email claim.");
-                }
-
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-                if (user == null)
-                {
-                    return NotFound(new { message = "User not found." });
-                }
-
-                // TODO
-
-                return Ok(new { message = "TODO" });
-            } catch (Exception e) {
-                _logger.LogError(e, "Error in GameController - PlayGame:");
-                return StatusCode(500, new { message = "Unable to play game." });
+                _logger.LogError(e, "Error in GameController - PausePlayGame:");
+                return StatusCode(500, new { message = "Unable to pause/play game." });
             }
         }
 
