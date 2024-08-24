@@ -2,135 +2,85 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Logging;
+using System.Net.WebSockets;
+using System.Text;
 using Solara.Data;
 using Solara.Models;
+using Solara.Services;
 
 namespace Solara.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class GameController : ControllerBase
     {
         private readonly ApplicationContext _context;
+        private readonly UserSocketManager _userSocketManager;
 
         private readonly ILogger<GameController> _logger;
 
-        public GameController(ApplicationContext context, ILogger<GameController> logger)
+        public GameController(ApplicationContext context, ILogger<GameController> logger, UserSocketManager userSocketManager)
         {
             _context = context;
             _logger = logger;
+            _userSocketManager = userSocketManager;
         }
 
         // GET /api/game
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GameInfo()
+        public async Task StartGame()
         {
             try {
                 var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
 
                 if (string.IsNullOrEmpty(email))
                 {
-                    return BadRequest("Invalid email claim.");
+                    HttpContext.Response.StatusCode = 400;
+                    return;
                 }
 
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
                 if (user == null)
                 {
-                    return NotFound(new { message = "User not found." });
+                    HttpContext.Response.StatusCode = 404;
+                    return;
                 }
 
-                // TODO
-
-                return Ok(new { message = "TODO" });
-            } catch (Exception e) {
-                _logger.LogError(e, "Error in GameController - GameInfo:");
-                return StatusCode(500, new { message = "Unable to get game." });
-            }
-        }
-
-        // POST /api/game
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> StartGame()
-        {
-            try {
-                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
-
-                if (string.IsNullOrEmpty(email))
+                if (HttpContext.WebSockets.IsWebSocketRequest)
                 {
-                    return BadRequest("Invalid email claim.");
-                }
+                    // TODO: consider if the user already has an active connection
+                    var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+                    var userId = user.Id;
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-                if (user == null)
+                    await HandleWebSocketCommunication(userId, webSocket);
+                }
+                else
                 {
-                    return NotFound(new { message = "User not found." });
+                    HttpContext.Response.StatusCode = 400;
                 }
 
-                // TODO
-
-                return Ok(new { message = "TODO" });
             } catch (Exception e) {
                 _logger.LogError(e, "Error in GameController - StartGame:");
-                return StatusCode(500, new { message = "Unable to start game." });
+                HttpContext.Response.StatusCode = 500;
             }
         }
 
-        // PATCH /api/game
-        [HttpPatch]
-        [Authorize]
-        public async Task<IActionResult> PausePlayGame()
-        {
-            try {
-                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+        private async Task HandleWebSocketCommunication(int userId, WebSocket webSocket) {
+            await _userSocketManager.AddSocket(userId, webSocket);
 
-                if (string.IsNullOrEmpty(email))
-                {
-                    return BadRequest("Invalid email claim.");
-                }
+            var buffer = new byte[1024 * 4];  // TODO: buffer size can be configured centrally
+            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
 
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-                if (user == null)
-                {
-                    return NotFound(new { message = "User not found." });
-                }
-
-                // TODO
-
-                return Ok(new { message = "TODO" });
-            } catch (Exception e) {
-                _logger.LogError(e, "Error in GameController - PausePlayGame:");
-                return StatusCode(500, new { message = "Unable to pause/play game." });
+            while (!result.CloseStatus.HasValue)
+            {
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
-        }
 
-        // DELETE /api/game
-        [HttpDelete]
-        [Authorize]
-        public async Task<IActionResult> StopGame()
-        {
-            try {
-                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
+            await _userSocketManager.RemoveSocket(userId);
+            _logger.LogInformation($"WebSocket connection closed for user {userId}");
 
-                if (string.IsNullOrEmpty(email))
-                {
-                    return BadRequest("Invalid email claim.");
-                }
-
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-                if (user == null)
-                {
-                    return NotFound(new { message = "User not found." });
-                }
-
-                // TODO
-
-                return Ok(new { message = "TODO" });
-            } catch (Exception e) {
-                _logger.LogError(e, "Error in GameController - StopGame:");
-                return StatusCode(500, new { message = "Unable to stop game." });
-            }
         }
     }
 }

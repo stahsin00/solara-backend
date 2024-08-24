@@ -62,6 +62,7 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddHostedService<GameTickService>();
+builder.Services.AddSingleton<UserSocketManager>();
 
 
 var app = builder.Build();
@@ -76,11 +77,11 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-app.UseHttpsRedirection();
-
 // TODO: temp
 app.UseStaticFiles();
 
+app.UseHttpsRedirection();
+app.UseWebSockets();
 app.UseRouting();
 app.UseCors("Frontend");
 app.UseAuthentication();
