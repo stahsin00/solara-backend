@@ -74,9 +74,11 @@ namespace Solara.Controllers
 
             while (!result.CloseStatus.HasValue)
             {
+                // TODO: pause/play?
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
+            // TODO: database updates
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
             await _userSocketManager.RemoveSocket(userId);
             _logger.LogInformation($"WebSocket connection closed for user {userId}");

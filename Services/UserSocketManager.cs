@@ -20,6 +20,19 @@ namespace Solara.Services
             return Task.CompletedTask;
         }
 
+        // TODO
+        public async Task CloseSocket(int userId, string closeStatusDescription)
+        {
+            if (_sockets.TryRemove(userId, out var socket))
+            {
+                if (socket.State == WebSocketState.Open || socket.State == WebSocketState.CloseReceived)
+                {
+                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, closeStatusDescription, CancellationToken.None);
+                }
+                socket.Dispose();
+            }
+        }
+
         // TODO: from chatgpt, ignore for now
         public async Task SendMessageAsync(int userId, string message)
         {

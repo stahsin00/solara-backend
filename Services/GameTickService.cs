@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Solara.Data;
 
 namespace Solara.Services
@@ -6,13 +7,15 @@ namespace Solara.Services
     {
         private readonly ILogger<GameTickService> _logger;
         private readonly IServiceScopeFactory _scopeFactory; // TODO: look into scoped services
+        private readonly UserSocketManager _userSocketManager;
 
         private Timer? _timer = null;
 
-        public GameTickService(ILogger<GameTickService> logger, IServiceScopeFactory scopeFactory)
+        public GameTickService(ILogger<GameTickService> logger, IServiceScopeFactory scopeFactory, UserSocketManager userSocketManager)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
+            _userSocketManager = userSocketManager;
         }
 
         public Task StartAsync(CancellationToken stoppingToken)
@@ -24,7 +27,7 @@ namespace Solara.Services
             return Task.CompletedTask;
         }
 
-        private void DoWork(object? state)
+        private async void DoWork(object? state)
         {
             try
             {
@@ -32,7 +35,7 @@ namespace Solara.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
 
-                    var runningGames = context.Games.Where(g => g.Running).ToList();  // TODO: cache?
+                    var runningGames = context.Games.Where(g => g.Running).Include(g => g.User).ToList();  // TODO: cache?
 
                     foreach (var game in runningGames)
                     {
@@ -40,7 +43,7 @@ namespace Solara.Services
 
                         if (game.EnemyCurHealth <= 0)
                         {
-                            // TODO: inform user
+                            await _userSocketManager.SendMessageAsync(game.User.Id, "Enemy defeated.");
                             game.EnemyCurHealth = game.EnemyMaxHealth;
                             game.RewardBalance += 100;  // TODO: hardcoded values
                             game.RewardExp += 1;
@@ -50,7 +53,8 @@ namespace Solara.Services
                         if (game.RemainingTime <= TimeSpan.Zero)
                         {
                             game.Running = false;
-                            // TODO: inform user
+                            // TODO: other database updates
+                            await _userSocketManager.CloseSocket(game.User.Id, "Time's up.");
                         }
 
                         game.LastUpdate = DateTime.UtcNow;
