@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Solara.Data;
 
@@ -11,9 +12,11 @@ using Solara.Data;
 namespace solara_backend.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    partial class ApplicationContextModelSnapshot : ModelSnapshot
+    [Migration("20240824031101_GameModel")]
+    partial class GameModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -240,14 +243,17 @@ namespace solara_backend.Migrations
                     b.Property<float>("EnemyMaxHealth")
                         .HasColumnType("float");
 
+                    b.Property<int>("Hours")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("LastUpdate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("QuestId")
+                    b.Property<int>("Minutes")
                         .HasColumnType("int");
 
-                    b.Property<TimeSpan>("RemainingTime")
-                        .HasColumnType("time(6)");
+                    b.Property<int>("QuestId")
+                        .HasColumnType("int");
 
                     b.Property<int>("RewardBalance")
                         .HasColumnType("int");
@@ -257,6 +263,9 @@ namespace solara_backend.Migrations
 
                     b.Property<bool>("Running")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("Seconds")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("StartTime")
                         .HasColumnType("datetime(6)");
