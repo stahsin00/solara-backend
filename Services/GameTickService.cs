@@ -47,6 +47,8 @@ namespace Solara.Services
                         game.LastUpdate = DateTime.UtcNow;
                         game.EnemyCurHealth -= game.DPS;
 
+                        await _userSocketManager.SendMessageAsync(game.User.Id, "Tick"); // TODO: remove
+
                         if (game.EnemyCurHealth <= 0)
                         {
                             await _userSocketManager.SendMessageAsync(game.User.Id, "Enemy defeated.");  // TODO send JSON info instead?
