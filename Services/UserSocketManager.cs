@@ -14,14 +14,7 @@ namespace Solara.Services
             return Task.CompletedTask;
         }
 
-        public Task RemoveSocket(int userId)
-        {
-            _sockets.TryRemove(userId, out _);
-            return Task.CompletedTask;
-        }
-
-        // TODO
-        public async Task CloseSocket(int userId, string closeStatusDescription)
+        public async Task CloseSocket(int userId, string closeStatusDescription = "Websocket connection closed.")
         {
             if (_sockets.TryRemove(userId, out var socket))
             {
@@ -33,7 +26,7 @@ namespace Solara.Services
             }
         }
 
-        // TODO: from chatgpt, ignore for now
+        // TODO: send JSON info instead (?)
         public async Task SendMessageAsync(int userId, string message)
         {
             if (_sockets.TryGetValue(userId, out var socket) && socket.State == WebSocketState.Open)

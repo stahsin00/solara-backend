@@ -4,6 +4,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using StackExchange.Redis;
 
 using Solara.Data;
 using Solara.Services;
@@ -26,6 +27,9 @@ var clientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
 var clientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
 
 var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "/";
+
+var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "localhost";
+var redisPort = Environment.GetEnvironmentVariable("REDIS_PORT") ?? "6379";
 
 
 // Configure services
@@ -61,8 +65,10 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}"));
 builder.Services.AddHostedService<GameTickService>();
 builder.Services.AddSingleton<UserSocketManager>();
+builder.Services.AddSingleton<RedisCacheService>();
 
 
 var app = builder.Build();

@@ -51,9 +51,8 @@ namespace Solara.Controllers
                 {
                     // TODO: consider if the user already has an active connection
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                    var userId = user.Id;
 
-                    await HandleWebSocketCommunication(userId, webSocket);
+                    await HandleWebSocketCommunication(user.Id, webSocket);
                 }
                 else
                 {
@@ -79,8 +78,7 @@ namespace Solara.Controllers
             }
 
             // TODO: database updates
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
-            await _userSocketManager.RemoveSocket(userId);
+            await _userSocketManager.CloseSocket(userId);
             _logger.LogInformation($"WebSocket connection closed for user {userId}");
 
         }
