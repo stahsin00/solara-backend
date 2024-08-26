@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Solara.Data;
+using Solara.Models;
 
 namespace Solara.Services
 {
@@ -8,14 +9,16 @@ namespace Solara.Services
         private readonly ILogger<GameTickService> _logger;
         private readonly IServiceScopeFactory _scopeFactory; // TODO: look into scoped services
         private readonly UserSocketManager _userSocketManager;
+        private readonly RedisCacheService _redis;
 
         private Timer? _timer = null;
 
-        public GameTickService(ILogger<GameTickService> logger, IServiceScopeFactory scopeFactory, UserSocketManager userSocketManager)
+        public GameTickService(ILogger<GameTickService> logger, IServiceScopeFactory scopeFactory, UserSocketManager userSocketManager, RedisCacheService redis)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
             _userSocketManager = userSocketManager;
+            _redis = redis;
         }
 
         public Task StartAsync(CancellationToken stoppingToken)
@@ -36,10 +39,12 @@ namespace Solara.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
 
-                    var runningGames = context.Games.Where(g => g.Running).Include(g => g.User).ToList();  // TODO: cache?
+                    var runningGames = await _redis.GetAllHashAsync<Game>();
 
                     foreach (var game in runningGames)
                     {
+                        if (game == null) continue;  // TODO
+                        game.LastUpdate = DateTime.UtcNow;
                         game.EnemyCurHealth -= game.DPS;
 
                         if (game.EnemyCurHealth <= 0)
@@ -53,15 +58,26 @@ namespace Solara.Services
                         game.RemainingTime = game.RemainingTime.Subtract(TimeSpan.FromSeconds(1));
                         if (game.RemainingTime <= TimeSpan.Zero)
                         {
-                            game.Running = false;
-                            // TODO: other database updates
+                            // TODO: any other game ending updates
+                            var dbGame = await context.Games.FindAsync(game.Id);
+                            if (dbGame != null)
+                            {
+                                dbGame.Running = false;
+                                dbGame.LastUpdate = game.LastUpdate;
+                                dbGame.RewardBalance = game.RewardBalance;
+                                dbGame.RewardExp = game.RewardExp;
+                                dbGame.RemainingTime = game.RemainingTime;
+                                dbGame.EnemyCurHealth = game.EnemyCurHealth;
+
+                                context.Games.Update(dbGame);
+                            }
+
+                            await _redis.RemoveHashAsync<Game>(game.Id.ToString());
                             await _userSocketManager.CloseSocket(game.User.Id, "Time's up.");
+                        } else {
+                            await _redis.SetHashAsync(game.Id.ToString(), game);  // TODO: batch updates (?)
                         }
-
-                        game.LastUpdate = DateTime.UtcNow;
                     }
-
-                    context.SaveChanges();
                 }
             }
             catch (Exception e)

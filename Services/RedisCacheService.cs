@@ -2,6 +2,7 @@ using StackExchange.Redis;
 using System.Text.Json;
 
 // TODO: error handling (serialization/deserialization)
+// TODO: limit max number of active games and inform user if limit reached
 public class RedisCacheService
 {
     private readonly IDatabase _redis;
@@ -73,5 +74,20 @@ public class RedisCacheService
                     .ToList();
 
         return values;
+    }
+
+    // TODO: ;-;
+    public void SetAllHashAsync<T>(Dictionary<string, T> values) 
+    {
+        var batch = _redis.CreateBatch();
+        var typeKey = typeof(T).Name.ToLower();
+
+        foreach (var value in values)
+        {
+            var serializedValue = JsonSerializer.Serialize(value.Value);
+            _ = batch.HashSetAsync(typeKey, value.Key, serializedValue);  // TODO
+        }
+
+        batch.Execute();
     }
 }
