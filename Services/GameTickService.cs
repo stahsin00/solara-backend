@@ -27,6 +27,7 @@ namespace Solara.Services
             return Task.CompletedTask;
         }
 
+        // TODO: prevent overlapping timers, do something about async void
         private async void DoWork(object? state)
         {
             try
@@ -43,9 +44,9 @@ namespace Solara.Services
 
                         if (game.EnemyCurHealth <= 0)
                         {
-                            await _userSocketManager.SendMessageAsync(game.User.Id, "Enemy defeated.");
+                            await _userSocketManager.SendMessageAsync(game.User.Id, "Enemy defeated.");  // TODO send JSON info instead?
                             game.EnemyCurHealth = game.EnemyMaxHealth;
-                            game.RewardBalance += 100;  // TODO: hardcoded values
+                            game.RewardBalance += 100;  // TODO: centralize hardcoded values
                             game.RewardExp += 1;
                         }
 
