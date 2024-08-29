@@ -1,6 +1,5 @@
 using System.Net.WebSockets;
 using System.Collections.Concurrent;
-using System.Threading.Tasks;
 
 namespace Solara.Services
 {

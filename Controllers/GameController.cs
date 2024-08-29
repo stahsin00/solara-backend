@@ -7,6 +7,7 @@ using System.Text;
 using Solara.Data;
 using Solara.Models;
 using Solara.Services;
+using Solara.Dtos;
 
 namespace Solara.Controllers
 {
@@ -29,63 +30,83 @@ namespace Solara.Controllers
             _redis = redis;
         }
 
-        // GET /api/game
-        [HttpGet("{id}")]
-        public async Task StartGame(int id)
+        [HttpPost]
+        public async Task<IActionResult> CreateGame([FromBody] GameDto dto)
         {
-            _logger.LogInformation("1");
             try {
                 var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
-                _logger.LogInformation($"{email}");
+
                 if (string.IsNullOrEmpty(email))
                 {
-                    HttpContext.Response.StatusCode = 400;
-                    return;
+                    return BadRequest(new { message = "Invalid email claim." });
                 }
 
                 var user = await _context.Users.Include(u => u.Quests)
                                             .FirstOrDefaultAsync(u => u.Email == email);
                 if (user == null)
                 {
-                    HttpContext.Response.StatusCode = 404;
+                    return NotFound(new { message = "User not found." });
+                }
+
+                Quest? quest = user.Quests.FirstOrDefault(q => q.Id == dto.Id);
+                if (quest == null)
+                {
+                    return NotFound(new { message = "Quest not found." });
+                }
+
+                var game = new Game 
+                {
+                    User = user,
+                    Quest = quest,
+                    RemainingTime = TimeSpan.FromMinutes(dto.Minutes),
+                    EnemyCurHealth = 100,
+                    EnemyMaxHealth = 100,
+                    DPS = 5,
+                    CritRate = 0.5f,
+                    CritDamage = 100,
+                    Running = false
+                };
+
+                _context.Games.Add(game);
+                await _context.SaveChangesAsync();
+
+                return Ok(game);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in GameController - CreateGame:");
+                return StatusCode(500, new { message = "Unable to create game." });
+            }
+        }
+
+        // GET /api/game
+        [HttpGet("{id}")]
+        public async Task StartGame(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(email))
+                {
+                    HttpContext.Response.StatusCode = 400;
                     return;
                 }
-                _logger.LogInformation($"{user}");
 
-                var quest = user.Quests.FirstOrDefault(q => q.Id == id);
-                if (quest == null)
+                var game = await _context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == id);
+                if (game == null || game.User.Email != email)
                 {
                     HttpContext.Response.StatusCode = 404;
                     return;
                 }
-                _logger.LogInformation($"{quest}");
 
                 if (HttpContext.WebSockets.IsWebSocketRequest)
                 {
                     // TODO: consider if the user already has an active connection
-
-                    var game = new Game 
-                    {
-                        User = user,
-                        Quest = quest,
-                        RemainingTime = TimeSpan.FromMinutes(2),
-                        EnemyCurHealth = 100,
-                        EnemyMaxHealth = 100,
-                        DPS = 5,
-                        CritRate = 0.5f,
-                        CritDamage = 100
-                    };
-                    _logger.LogInformation($"{game}");
-
-                    _context.Games.Add(game);
-                    await _context.SaveChangesAsync();
-                    _logger.LogInformation("context");
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-                    _logger.LogInformation("websocket");
-                    await _redis.SetHashAsync(game.Id.ToString(), game);
-                    _logger.LogInformation("redis");
 
-                    await HandleWebSocketCommunication(user.Id, game.Id, webSocket);
+                    game.Running = true;
+                    await _context.SaveChangesAsync();
+
+                    await _redis.SetHashAsync(game.Id.ToString(), game);
+
+                    await HandleWebSocketCommunication(game.User.Id, game.Id, webSocket);
                 }
                 else
                 {
@@ -106,15 +127,26 @@ namespace Solara.Controllers
 
             while (!result.CloseStatus.HasValue)
             {
-                // TODO: pause/play?
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
-            // TODO: database updates
             await _userSocketManager.CloseSocket(userId);
             await _redis.RemoveHashAsync<Game>(gameId.ToString());
-            _logger.LogInformation($"WebSocket connection closed for user {userId}");
 
+            var game = await _context.Games.FindAsync(gameId);
+            if (game != null)
+            {
+                game.Running = false;
+                game.LastUpdate = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                _logger.LogError($"Game with ID {gameId} not found in the database.");
+            }
+
+            _logger.LogInformation($"WebSocket connection closed for user {userId}");
         }
     }
 }
