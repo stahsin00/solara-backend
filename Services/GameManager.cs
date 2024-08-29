@@ -21,9 +21,28 @@ namespace Solara.Services
             GameTickService.OnTick += Update;
         }
 
-        public async Task StartGame(int gameId) {
+        public async Task StartGame(Game game) { 
             // TODO
-            _logger.LogInformation("Game Started: " + gameId);
+            try
+            {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
+
+                    context.Attach(game);  // TODO: assumes this method is called on a valid entity in the database
+                    game.Running = true;
+
+                    context.Entry(game).State = EntityState.Modified;
+
+                    await context.SaveChangesAsync();
+
+                    await _redis.SetHashAsync(game.Id.ToString(), game);
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occurred while starting game.");
+            }
         }
 
         // TODO: prevent overlapping updates, do something about async void
@@ -86,7 +105,28 @@ namespace Solara.Services
         }
 
         public async Task StopGame(int gameId) {
-            // TODO
+            try {
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
+
+                    await _redis.RemoveHashAsync<Game>(gameId.ToString());
+
+                    var game = await context.Games.FindAsync(gameId);
+                    if (game != null)
+                    {
+                        game.Running = false;
+                        game.LastUpdate = DateTime.UtcNow;
+                        // TODO: other database updates
+
+                        await context.SaveChangesAsync();
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "An error occurred while stopping game.");
+            }
         }
 
         public void Dispose()
