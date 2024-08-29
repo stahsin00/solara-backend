@@ -69,6 +69,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Conn
 builder.Services.AddHostedService<GameTickService>();
 builder.Services.AddSingleton<UserSocketManager>();
 builder.Services.AddSingleton<RedisCacheService>();
+builder.Services.AddSingleton<GameManager>();
 
 
 var app = builder.Build();

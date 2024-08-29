@@ -7,6 +7,11 @@ namespace Solara.Services
     {
         private readonly ConcurrentDictionary<int, WebSocket> _sockets = new ConcurrentDictionary<int, WebSocket>();
 
+        public bool HasActiveConnection(int userId)
+        {
+            return _sockets.TryGetValue(userId, out var socket) && socket.State == WebSocketState.Open;
+        }
+
         public Task AddSocket(int userId, WebSocket socket)
         {
             _sockets.TryAdd(userId, socket);

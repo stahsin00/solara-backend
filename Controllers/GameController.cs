@@ -19,15 +19,17 @@ namespace Solara.Controllers
         private readonly ApplicationContext _context;
         private readonly UserSocketManager _userSocketManager;
         private readonly RedisCacheService _redis;
+        private readonly GameManager _gameManager;
 
         private readonly ILogger<GameController> _logger;
 
-        public GameController(ApplicationContext context, ILogger<GameController> logger, UserSocketManager userSocketManager, RedisCacheService redis)
+        public GameController(ApplicationContext context, ILogger<GameController> logger, UserSocketManager userSocketManager, RedisCacheService redis, GameManager gameManager)
         {
             _context = context;
             _logger = logger;
             _userSocketManager = userSocketManager;
             _redis = redis;
+            _gameManager = gameManager;
         }
 
         [HttpPost]
@@ -77,6 +79,32 @@ namespace Solara.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteGame(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var game = await _context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == id);
+                if (game == null || game.User.Email != email)
+                {
+                    return NotFound(new { message = "Game not found." });
+                }
+
+                // TODO
+
+                return Ok(game);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in GameController - CreateGame:");
+                return StatusCode(500, new { message = "Unable to create game." });
+            }
+        }
+
         // GET /api/game
         [HttpGet("{id}")]
         public async Task StartGame(int id)
@@ -98,8 +126,13 @@ namespace Solara.Controllers
 
                 if (HttpContext.WebSockets.IsWebSocketRequest)
                 {
-                    // TODO: consider if the user already has an active connection
+                    if (_userSocketManager.HasActiveConnection(game.User.Id)) {  // TODO
+                        HttpContext.Response.StatusCode = 400;
+                    }
+
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+
+                    await _gameManager.StartGame(game.Id);  // TODO
 
                     game.Running = true;
                     await _context.SaveChangesAsync();
