@@ -59,7 +59,7 @@ namespace Solara.Services
                         if (game.RemainingTime <= TimeSpan.Zero)
                         {
                             // TODO: any other game ending updates
-                            var dbGame = await context.Games.FindAsync(game.Id);
+                            var dbGame = await context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == game.Id);
                             if (dbGame != null)
                             {
                                 dbGame.Running = false;
@@ -69,7 +69,10 @@ namespace Solara.Services
                                 dbGame.RemainingTime = game.RemainingTime;
                                 dbGame.EnemyCurHealth = game.EnemyCurHealth;
 
-                                context.Games.Update(dbGame);
+                                dbGame.User.Balance += game.RewardBalance;
+                                dbGame.User.Exp += game.RewardExp;
+
+                                await context.SaveChangesAsync();
                             }
 
                             await _redis.RemoveHashAsync<Game>(game.Id.ToString());
