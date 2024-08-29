@@ -18,16 +18,16 @@ namespace Solara.Controllers
     {
         private readonly ApplicationContext _context;
         private readonly UserSocketManager _userSocketManager;
-        private readonly RedisCacheService _redis;
+        private readonly GameManager _gameManager;
 
         private readonly ILogger<GameController> _logger;
 
-        public GameController(ApplicationContext context, ILogger<GameController> logger, UserSocketManager userSocketManager, RedisCacheService redis)
+        public GameController(ApplicationContext context, ILogger<GameController> logger, UserSocketManager userSocketManager, GameManager gameManager)
         {
             _context = context;
             _logger = logger;
             _userSocketManager = userSocketManager;
-            _redis = redis;
+            _gameManager = gameManager;
         }
 
         [HttpPost]
@@ -77,6 +77,33 @@ namespace Solara.Controllers
             }
         }
 
+        // TODO
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteGame(int id)
+        {
+            try {
+                var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest(new { message = "Invalid email claim." });
+                }
+
+                var game = await _context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == id);
+                if (game == null || game.User.Email != email)
+                {
+                    return NotFound(new { message = "Game not found." });
+                }
+
+                // TODO
+
+                return Ok(game);
+            } catch (Exception e) {
+                _logger.LogError(e, "Error in GameController - CreateGame:");
+                return StatusCode(500, new { message = "Unable to create game." });
+            }
+        }
+
         // GET /api/game
         [HttpGet("{id}")]
         public async Task StartGame(int id)
@@ -98,13 +125,13 @@ namespace Solara.Controllers
 
                 if (HttpContext.WebSockets.IsWebSocketRequest)
                 {
-                    // TODO: consider if the user already has an active connection
+                    if (_userSocketManager.HasActiveConnection(game.User.Id)) {
+                        HttpContext.Response.StatusCode = 400;
+                    }
+
                     var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
 
-                    game.Running = true;
-                    await _context.SaveChangesAsync();
-
-                    await _redis.SetHashAsync(game.Id.ToString(), game);
+                    await _gameManager.StartGame(game);
 
                     await HandleWebSocketCommunication(game.User.Id, game.Id, webSocket);
                 }
@@ -131,20 +158,7 @@ namespace Solara.Controllers
             }
 
             await _userSocketManager.CloseSocket(userId);
-            await _redis.RemoveHashAsync<Game>(gameId.ToString());
-
-            var game = await _context.Games.FindAsync(gameId);
-            if (game != null)
-            {
-                game.Running = false;
-                game.LastUpdate = DateTime.UtcNow;
-
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                _logger.LogError($"Game with ID {gameId} not found in the database.");
-            }
+            await _gameManager.StopGame(gameId);
 
             _logger.LogInformation($"WebSocket connection closed for user {userId}");
         }
