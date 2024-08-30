@@ -54,6 +54,12 @@ namespace Solara.Controllers
                     return NotFound(new { message = "Quest not found." });
                 }
 
+                var dbGame = await _context.Games.FirstOrDefaultAsync(g => g.UserId == user.Id);  // TODO
+
+                if (dbGame != null) {
+                    return BadRequest(new { message = "User already has an existing game." });
+                }
+
                 var game = new Game 
                 {
                     User = user,
@@ -77,9 +83,8 @@ namespace Solara.Controllers
             }
         }
 
-        // TODO
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGame(int id)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteGame()
         {
             try {
                 var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -89,24 +94,35 @@ namespace Solara.Controllers
                     return BadRequest(new { message = "Invalid email claim." });
                 }
 
-                var game = await _context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == id);
-                if (game == null || game.User.Email != email)
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+                if (user == null)
                 {
-                    return NotFound(new { message = "Game not found." });
+                    return NotFound(new { message = "User not found." });
                 }
 
-                // TODO
+                var game = await _context.Games.FirstOrDefaultAsync(g => g.UserId == user.Id);  // TODO
 
-                return Ok(game);
+                if (game == null) {
+                    return BadRequest(new { message = "This user does not have a game." });
+                }
+
+                if (game.Running) {
+                    return BadRequest(new { message = "Cannot delete a running game." });
+                }
+
+                _context.Games.Remove(game);
+                await _context.SaveChangesAsync();
+
+                return Ok();
             } catch (Exception e) {
-                _logger.LogError(e, "Error in GameController - CreateGame:");
-                return StatusCode(500, new { message = "Unable to create game." });
+                _logger.LogError(e, "Error in GameController - DeleteGame:");
+                return StatusCode(500, new { message = "Unable to delete game." });
             }
         }
 
         // GET /api/game
-        [HttpGet("{id}")]
-        public async Task StartGame(int id)
+        [HttpGet]
+        public async Task StartGame()
         {
             try {
                 var email = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -116,8 +132,17 @@ namespace Solara.Controllers
                     return;
                 }
 
-                var game = await _context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == id);
-                if (game == null || game.User.Email != email)
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user == null)
+                {
+                    HttpContext.Response.StatusCode = 404;
+                    return;
+                }
+
+                var game = await _context.Games.FirstOrDefaultAsync(g => g.UserId == user.Id);  // TODO
+
+                if (game == null)
                 {
                     HttpContext.Response.StatusCode = 404;
                     return;
@@ -125,7 +150,7 @@ namespace Solara.Controllers
 
                 if (HttpContext.WebSockets.IsWebSocketRequest)
                 {
-                    if (_userSocketManager.HasActiveConnection(game.User.Id)) {
+                    if (_userSocketManager.HasActiveConnection(user.Id)) {
                         HttpContext.Response.StatusCode = 400;
                     }
 
@@ -133,7 +158,7 @@ namespace Solara.Controllers
 
                     await _gameManager.StartGame(game);
 
-                    await HandleWebSocketCommunication(game.User.Id, game.Id, webSocket);
+                    await HandleWebSocketCommunication(user.Id, game.Id, webSocket);
                 }
                 else
                 {
@@ -157,8 +182,8 @@ namespace Solara.Controllers
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
-            await _userSocketManager.CloseSocket(userId);
             await _gameManager.StopGame(gameId);
+            await _userSocketManager.CloseSocket(userId);
 
             _logger.LogInformation($"WebSocket connection closed for user {userId}");
         }

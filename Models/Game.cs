@@ -3,7 +3,10 @@ namespace Solara.Models
     public class Game
     {
         public int Id { get; set; }
+
+        public int UserId { get; set; }
         public User User { get; set; } = null!;
+        
         public Quest Quest { get; set; } = null!;
 
         public TimeSpan RemainingTime { get; set; }
@@ -17,7 +20,7 @@ namespace Solara.Models
         public float CritDamage { get; set; }
         // TODO: ignore for now, keep the characters currently in the game for special attacks or other character specific calculations
 
-        public bool Running { get; set; } = true;
+        public bool Running { get; set; } = false;
 
         public int RewardBalance { get; set; } = 0;
         public int RewardExp { get; set; } = 0;

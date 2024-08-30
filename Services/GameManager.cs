@@ -22,7 +22,6 @@ namespace Solara.Services
         }
 
         public async Task StartGame(Game game) { 
-            // TODO
             try
             {
                 using (var scope = _scopeFactory.CreateScope())
@@ -112,14 +111,19 @@ namespace Solara.Services
 
                     await _redis.RemoveHashAsync<Game>(gameId.ToString());
 
-                    var game = await context.Games.FindAsync(gameId);
+                    var game = await context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == gameId);
                     if (game != null)
                     {
                         game.Running = false;
                         game.LastUpdate = DateTime.UtcNow;
-                        // TODO: other database updates
+                        game.User.Balance += game.RewardBalance;
+                        game.User.Exp += game.RewardExp;
+                        game.RewardBalance = 0;
+                        game.RewardExp = 0;
 
                         await context.SaveChangesAsync();
+                    } else {
+                        _logger.LogError("Trying to stop a nonexistant game.");
                     }
                 }
             }
