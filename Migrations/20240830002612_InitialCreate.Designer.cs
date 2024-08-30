@@ -12,8 +12,8 @@ using Solara.Data;
 namespace solara_backend.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20240822200012_AddTeam")]
-    partial class AddTeam
+    [Migration("20240830002612_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -189,8 +189,8 @@ namespace solara_backend.Migrations
                     b.Property<float>("SpeedStat")
                         .HasColumnType("float");
 
-                    b.Property<bool>("Team")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<int>("TeamPos")
+                        .HasColumnType("int");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -218,6 +218,62 @@ namespace solara_backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EquipmentInstances");
+                });
+
+            modelBuilder.Entity("Solara.Models.Game", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<float>("CritDamage")
+                        .HasColumnType("float");
+
+                    b.Property<float>("CritRate")
+                        .HasColumnType("float");
+
+                    b.Property<float>("DPS")
+                        .HasColumnType("float");
+
+                    b.Property<float>("EnemyCurHealth")
+                        .HasColumnType("float");
+
+                    b.Property<float>("EnemyMaxHealth")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("LastUpdate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("QuestId")
+                        .HasColumnType("int");
+
+                    b.Property<TimeSpan>("RemainingTime")
+                        .HasColumnType("time(6)");
+
+                    b.Property<int>("RewardBalance")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RewardExp")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Running")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("Solara.Models.Quest", b =>
@@ -366,6 +422,25 @@ namespace solara_backend.Migrations
                         .IsRequired();
 
                     b.Navigation("Character");
+                });
+
+            modelBuilder.Entity("Solara.Models.Game", b =>
+                {
+                    b.HasOne("Solara.Models.Quest", "Quest")
+                        .WithMany()
+                        .HasForeignKey("QuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Solara.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quest");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Solara.Models.Quest", b =>

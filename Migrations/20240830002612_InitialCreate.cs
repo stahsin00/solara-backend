@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace solara_backend.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTeam : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -79,7 +79,7 @@ namespace solara_backend.Migrations
                     CritRateStat = table.Column<float>(type: "float", nullable: false),
                     CritDamageStat = table.Column<float>(type: "float", nullable: false),
                     EnergyRechargeStat = table.Column<float>(type: "float", nullable: false),
-                    Team = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    TeamPos = table.Column<int>(type: "int", nullable: false),
                     ObtainedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
@@ -183,6 +183,44 @@ namespace solara_backend.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.CreateTable(
+                name: "Games",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    QuestId = table.Column<int>(type: "int", nullable: false),
+                    RemainingTime = table.Column<TimeSpan>(type: "time(6)", nullable: false),
+                    EnemyCurHealth = table.Column<float>(type: "float", nullable: false),
+                    EnemyMaxHealth = table.Column<float>(type: "float", nullable: false),
+                    DPS = table.Column<float>(type: "float", nullable: false),
+                    CritRate = table.Column<float>(type: "float", nullable: false),
+                    CritDamage = table.Column<float>(type: "float", nullable: false),
+                    Running = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    RewardBalance = table.Column<int>(type: "int", nullable: false),
+                    RewardExp = table.Column<int>(type: "int", nullable: false),
+                    StartTime = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    LastUpdate = table.Column<DateTime>(type: "datetime(6)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Games", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Games_Quests_QuestId",
+                        column: x => x.QuestId,
+                        principalTable: "Quests",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Games_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
             migrationBuilder.InsertData(
                 table: "Characters",
                 columns: new[] { "Id", "BaseAttackStat", "BaseCritDamageStat", "BaseCritRateStat", "BaseEnergyRechargeStat", "BaseSpeedStat", "BasicAttack", "Description", "Element", "FaceArt", "FullArt", "Name", "Price", "SpecialAttack" },
@@ -202,6 +240,16 @@ namespace solara_backend.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_CharacterInstances_UserId",
                 table: "CharacterInstances",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_QuestId",
+                table: "Games",
+                column: "QuestId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Games_UserId",
+                table: "Games",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -251,6 +299,9 @@ namespace solara_backend.Migrations
 
             migrationBuilder.DropTable(
                 name: "EquipmentInstances");
+
+            migrationBuilder.DropTable(
+                name: "Games");
 
             migrationBuilder.DropTable(
                 name: "Quests");
