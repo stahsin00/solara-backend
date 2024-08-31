@@ -60,7 +60,6 @@ namespace Solara.Services
                         if (game == null) continue;  // TODO
                         game.LastUpdate = DateTime.UtcNow;
                         game.EnemyCurHealth -= game.DPS;
-
                         if (game.EnemyCurHealth <= 0)
                         {
                             await _userSocketManager.SendMessageAsync(game.User.Id, "Enemy defeated.");  // TODO send JSON info instead?
@@ -109,6 +108,11 @@ namespace Solara.Services
                 {
                     var context = scope.ServiceProvider.GetRequiredService<ApplicationContext>();
 
+                    var cachedGame = await _redis.GetHashAsync<Game>(gameId.ToString());
+                    if (cachedGame == null) {
+                        _logger.LogError("Attempted to stop a game that is not running.");
+                        return;
+                    }
                     await _redis.RemoveHashAsync<Game>(gameId.ToString());
 
                     var game = await context.Games.Include(g => g.User).FirstOrDefaultAsync(g => g.Id == gameId);
@@ -116,10 +120,8 @@ namespace Solara.Services
                     {
                         game.Running = false;
                         game.LastUpdate = DateTime.UtcNow;
-                        game.User.Balance += game.RewardBalance;
-                        game.User.Exp += game.RewardExp;
-                        game.RewardBalance = 0;
-                        game.RewardExp = 0;
+                        game.RewardBalance += cachedGame.RewardBalance;
+                        game.RewardExp += cachedGame.RewardExp;
 
                         await context.SaveChangesAsync();
                     } else {
