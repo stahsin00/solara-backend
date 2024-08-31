@@ -110,6 +110,8 @@ namespace Solara.Controllers
                     return BadRequest(new { message = "Cannot delete a running game." });
                 }
 
+                user.Balance += game.RewardBalance;
+                user.Exp += game.RewardExp;
                 _context.Games.Remove(game);
                 await _context.SaveChangesAsync();
 
