@@ -1,6 +1,6 @@
 namespace Solara.Services
 {
-    public class GameTickService : IHostedService, IDisposable
+    public class GameTickService : IHostedService, IDisposable  // TODO: move to frontend 
     {
         private readonly ILogger<GameTickService> _logger;
 

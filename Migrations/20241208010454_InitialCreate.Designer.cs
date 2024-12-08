@@ -12,7 +12,7 @@ using Solara.Data;
 namespace solara_backend.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20240830002612_InitialCreate")]
+    [Migration("20241208010454_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
